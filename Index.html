@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Art of Prompt Engineering</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: The application is structured as a single-page, top-down narrative, guiding the user from foundational concepts to practical application. It starts with an 'Introduction' to establish context, moves to the 'Anatomy of a Prompt' for a structural breakdown, then to 'Prompting Techniques' for methodology comparison, and culminates in an 'Interactive Prompt Builder' for hands-on practice. This thematic, linear flow was chosen because it mirrors a natural learning progression, making complex information digestible for a novice user. Key interactions include clicking diagram components to reveal information, switching tabs to compare techniques, and real-time text generation in the builder, all designed to reinforce learning through active engagement rather than passive reading. -->
+    <!-- Visualization & Content Choices: 
+        1. Report Info: Core components of a prompt (Persona, Task, Context, etc.). Goal: Organize/Inform. Viz/Presentation: Interactive diagram made of styled HTML divs. Interaction: Clicking a component highlights it and displays its description and example, hiding others. Justification: This connects the conceptual structure of a prompt directly to its detailed explanation in a visually engaging way. Method: Vanilla JS DOM manipulation.
+        2. Report Info: Prompting techniques (Zero-shot, Few-shot, Chain of Thought). Goal: Compare. Viz/Presentation: A tabbed content area combined with a dynamic bar chart. Interaction: User clicks a tab, which updates the descriptive text and re-renders the chart to highlight the relative effectiveness of the selected technique. Justification: This provides both qualitative (description) and quantitative (chart) comparisons in a compact, user-controlled interface. Library: Chart.js for the chart, Vanilla JS for tabs.
+        3. Report Info: The process of constructing a prompt. Goal: Demonstrate/Practice. Viz/Presentation: A multi-input form section. Interaction: As the user types into fields for each prompt component, a final, formatted prompt is assembled in real-time in a display box. Justification: This provides immediate, practical feedback and transforms abstract concepts into a tangible output the user creates themselves. Method: Vanilla JS input event listeners.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFBF8; /* Warm Off-White */
+            color: #4A4A4A; /* Dark Gray */
+        }
+        .nav-link {
+            transition: color 0.3s ease;
+        }
+        .nav-link:hover {
+            color: #D97706; /* Amber */
+        }
+        .anatomy-item.active {
+            background-color: #FEF3C7; /* Amber Light */
+            border-color: #D97706; /* Amber */
+        }
+        .technique-tab.active {
+            border-color: #D97706; /* Amber */
+            color: #D97706;
+            background-color: #FFFBEB;
+        }
+        .prompt-builder-input {
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .prompt-builder-input:focus {
+            border-color: #D97706;
+            box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.2);
+            outline: none;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-200">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-xl font-bold text-gray-800">Prompt Engineering</span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#introduction" class="nav-link text-gray-600 px-3 py-2 rounded-md text-sm font-medium">Introduction</a>
+                        <a href="#anatomy" class="nav-link text-gray-600 px-3 py-2 rounded-md text-sm font-medium">Anatomy</a>
+                        <a href="#techniques" class="nav-link text-gray-600 px-3 py-2 rounded-md text-sm font-medium">Techniques</a>
+                        <a href="#builder" class="nav-link text-gray-600 px-3 py-2 rounded-md text-sm font-medium">Builder</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section id="introduction" class="py-16 sm:py-20">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h1 class="text-4xl font-extrabold text-gray-900 sm:text-5xl md:text-6xl">The Art of Prompt Engineering</h1>
+                <p class="mt-6 max-w-2xl mx-auto text-lg text-gray-600">
+                    Welcome to the interactive guide on constructing effective prompts for Large Language Models (LLMs). Prompt engineering is the practice of designing inputs to get desired outputs from AI. A well-crafted prompt is the key to unlocking the full potential of these powerful tools, turning a simple query into a precise and creative instruction.
+                </p>
+            </div>
+        </section>
+
+        <section id="anatomy" class="py-16 sm:py-20 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900">Anatomy of a Prompt</h2>
+                    <p class="mt-4 text-lg text-gray-600">A great prompt is more than just a question. It's a collection of components that work together to guide the AI. Click on each component below to learn more.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-start">
+                    <div class="space-y-4">
+                        <div id="anatomy-persona" class="anatomy-item active cursor-pointer p-4 border-2 border-gray-200 rounded-lg" onclick="selectAnatomy('persona')">
+                            <h3 class="font-semibold text-lg text-gray-800">1. Persona / Role</h3>
+                            <p class="text-sm text-gray-600">Define the AI's character or expertise.</p>
+                        </div>
+                        <div id="anatomy-task" class="anatomy-item cursor-pointer p-4 border-2 border-gray-200 rounded-lg" onclick="selectAnatomy('task')">
+                            <h3 class="font-semibold text-lg text-gray-800">2. Task / Instruction</h3>
+                            <p class="text-sm text-gray-600">State the specific action you want the AI to perform.</p>
+                        </div>
+                        <div id="anatomy-context" class="anatomy-item cursor-pointer p-4 border-2 border-gray-200 rounded-lg" onclick="selectAnatomy('context')">
+                            <h3 class="font-semibold text-lg text-gray-800">3. Context</h3>
+                            <p class="text-sm text-gray-600">Provide necessary background information.</p>
+                        </div>
+                         <div id="anatomy-examples" class="anatomy-item cursor-pointer p-4 border-2 border-gray-200 rounded-lg" onclick="selectAnatomy('examples')">
+                            <h3 class="font-semibold text-lg text-gray-800">4. Examples (Few-Shot)</h3>
+                            <p class="text-sm text-gray-600">Show the AI what a good output looks like.</p>
+                        </div>
+                        <div id="anatomy-constraints" class="anatomy-item cursor-pointer p-4 border-2 border-gray-200 rounded-lg" onclick="selectAnatomy('constraints')">
+                            <h3 class="font-semibold text-lg text-gray-800">5. Constraints / Rules</h3>
+                            <p class="text-sm text-gray-600">Set boundaries and guidelines for the response.</p>
+                        </div>
+                        <div id="anatomy-format" class="anatomy-item cursor-pointer p-4 border-2 border-gray-200 rounded-lg" onclick="selectAnatomy('format')">
+                            <h3 class="font-semibold text-lg text-gray-800">6. Output Format</h3>
+                            <p class="text-sm text-gray-600">Specify the desired structure of the output.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-6 rounded-lg min-h-[300px]">
+                        <div id="desc-persona" class="anatomy-desc">
+                            <h4 class="text-xl font-bold text-gray-900 mb-2">Persona / Role</h4>
+                            <p class="text-gray-700 mb-4">Assigning a role to the AI sets the tone, style, and knowledge base for its response. This is one of the most powerful ways to improve output quality.</p>
+                            <div class="bg-white p-4 rounded-md border border-gray-200">
+                                <p class="text-sm font-semibold text-gray-800">Example:</p>
+                                <p class="text-sm text-gray-600 mt-1 font-mono">"Act as an expert copywriter specializing in technology startups."</p>
+                            </div>
+                        </div>
+                        <div id="desc-task" class="anatomy-desc hidden">
+                            <h4 class="text-xl font-bold text-gray-900 mb-2">Task / Instruction</h4>
+                            <p class="text-gray-700 mb-4">This is the core of your prompt. It should be a clear, direct, and actionable command. The more specific your instruction, the better the result.</p>
+                             <div class="bg-white p-4 rounded-md border border-gray-200">
+                                <p class="text-sm font-semibold text-gray-800">Example:</p>
+                                <p class="text-sm text-gray-600 mt-1 font-mono">"Write three headlines for a new productivity app."</p>
+                            </div>
+                        </div>
+                         <div id="desc-context" class="anatomy-desc hidden">
+                            <h4 class="text-xl font-bold text-gray-900 mb-2">Context</h4>
+                            <p class="text-gray-700 mb-4">Context provides the 'who, what, where, when, why' that the AI needs to generate a relevant response. Without context, the AI has to make assumptions.</p>
+                             <div class="bg-white p-4 rounded-md border border-gray-200">
+                                <p class="text-sm font-semibold text-gray-800">Example:</p>
+                                <p class="text-sm text-gray-600 mt-1 font-mono">"The app is called 'FlowState' and it helps users block distracting websites. The target audience is students and freelance workers."</p>
+                            </div>
+                        </div>
+                        <div id="desc-examples" class="anatomy-desc hidden">
+                            <h4 class="text-xl font-bold text-gray-900 mb-2">Examples (Few-Shot)</h4>
+                            <p class="text-gray-700 mb-4">Providing a few examples of the input-output pattern you want is called "few-shot prompting." It's incredibly effective for guiding the AI's style and structure.</p>
+                             <div class="bg-white p-4 rounded-md border border-gray-200">
+                                <p class="text-sm font-semibold text-gray-800">Example:</p>
+                                <p class="text-sm text-gray-600 mt-1 font-mono">"Here's the style I like: 'Notion: Your All-in-One Workspace.' Now, generate headlines for FlowState."</p>
+                            </div>
+                        </div>
+                        <div id="desc-constraints" class="anatomy-desc hidden">
+                            <h4 class="text-xl font-bold text-gray-900 mb-2">Constraints / Rules</h4>
+                            <p class="text-gray-700 mb-4">Tell the AI what *not* to do, or what rules to follow. Constraints help refine the output and prevent unwanted information.</p>
+                             <div class="bg-white p-4 rounded-md border border-gray-200">
+                                <p class="text-sm font-semibold text-gray-800">Example:</p>
+                                <p class="text-sm text-gray-600 mt-1 font-mono">"Each headline must be under 10 words. Do not use jargon. Avoid exclamation points."</p>
+                            </div>
+                        </div>
+                        <div id="desc-format" class="anatomy-desc hidden">
+                            <h4 class="text-xl font-bold text-gray-900 mb-2">Output Format</h4>
+                            <p class="text-gray-700 mb-4">Explicitly stating the format you want saves you time and effort. Common formats include JSON, Markdown, HTML, or just a simple list.</p>
+                             <div class="bg-white p-4 rounded-md border border-gray-200">
+                                <p class="text-sm font-semibold text-gray-800">Example:</p>
+                                <p class="text-sm text-gray-600 mt-1 font-mono">"Return the output as a JSON array of strings."</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="techniques" class="py-16 sm:py-20">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900">Prompting Techniques</h2>
+                    <p class="mt-4 text-lg text-gray-600">Different tasks require different approaches. Explore some common techniques and see how they impact output quality and complexity.</p>
+                </div>
+                <div class="flex justify-center border-b border-gray-200 mb-8">
+                    <button id="tab-zero-shot" class="technique-tab active px-6 py-3 font-medium text-gray-600 border-b-2" onclick="selectTechnique('zero-shot')">Zero-Shot</button>
+                    <button id="tab-few-shot" class="technique-tab px-6 py-3 font-medium text-gray-600 border-b-2" onclick="selectTechnique('few-shot')">Few-Shot</button>
+                    <button id="tab-cot" class="technique-tab px-6 py-3 font-medium text-gray-600 border-b-2" onclick="selectTechnique('cot')">Chain of Thought</button>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+                    <div>
+                        <div id="content-zero-shot" class="technique-content">
+                            <h3 class="text-2xl font-bold text-gray-800">Zero-Shot Prompting</h3>
+                            <p class="mt-2 text-gray-600">The simplest form. You provide an instruction without any examples. It relies entirely on the model's pre-existing knowledge. Good for simple, direct tasks.</p>
+                            <div class="mt-4 bg-gray-100 p-4 rounded-lg font-mono text-sm">
+                                Classify the sentiment of this text: "The new phone is amazing!"
+                            </div>
+                        </div>
+                        <div id="content-few-shot" class="technique-content hidden">
+                            <h3 class="text-2xl font-bold text-gray-800">Few-Shot Prompting</h3>
+                            <p class="mt-2 text-gray-600">You provide a few examples of the task you want it to perform. This helps the model understand the desired pattern, style, and format, leading to much higher accuracy.</p>
+                            <div class="mt-4 bg-gray-100 p-4 rounded-lg font-mono text-sm">
+                               <p>Text: "I love the new update." -> Positive</p>
+                               <p>Text: "The battery life is terrible." -> Negative</p>
+                               <p>Text: "The new phone is amazing!" -> ?</p>
+                            </div>
+                        </div>
+                        <div id="content-cot" class="technique-content hidden">
+                            <h3 class="text-2xl font-bold text-gray-800">Chain of Thought (CoT) Prompting</h3>
+                            <p class="mt-2 text-gray-600">For complex reasoning tasks, you ask the model to "think step-by-step." By breaking down the problem, the model is more likely to arrive at the correct answer.</p>
+                             <div class="mt-4 bg-gray-100 p-4 rounded-lg font-mono text-sm">
+                               <p>Q: Roger has 5 tennis balls. He buys 2 more cans of tennis balls. Each can has 3 tennis balls. How many does he have now?</p>
+                               <p>A: Roger started with 5 balls. 2 cans of 3 balls is 6 balls. 5 + 6 = 11. The answer is 11.</p>
+                               <p>Q: [Your reasoning problem here]</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="techniquesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="builder" class="py-16 sm:py-20 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900">Interactive Prompt Builder</h2>
+                    <p class="mt-4 text-lg text-gray-600">Use the concepts you've learned to build your own prompt. Fill in the components below and see your complete prompt assemble in real-time.</p>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+                    <div class="space-y-6">
+                        <div>
+                            <label for="builder-persona" class="block text-sm font-medium text-gray-700">Persona / Role</label>
+                            <input type="text" id="builder-persona" class="prompt-builder-input mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="e.g., Act as a seasoned travel blogger...">
+                        </div>
+                        <div>
+                            <label for="builder-task" class="block text-sm font-medium text-gray-700">Task / Instruction</label>
+                            <textarea id="builder-task" rows="3" class="prompt-builder-input mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="e.g., Write a 3-day itinerary for a trip to Tokyo..."></textarea>
+                        </div>
+                        <div>
+                            <label for="builder-context" class="block text-sm font-medium text-gray-700">Context</label>
+                            <textarea id="builder-context" rows="3" class="prompt-builder-input mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="e.g., The traveler is on a budget, loves food, and is interested in history..."></textarea>
+                        </div>
+                         <div>
+                            <label for="builder-constraints" class="block text-sm font-medium text-gray-700">Constraints / Rules</label>
+                            <input type="text" id="builder-constraints" class="prompt-builder-input mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="e.g., The total budget for activities is $200. Avoid tourist traps...">
+                        </div>
+                        <div>
+                            <label for="builder-format" class="block text-sm font-medium text-gray-700">Output Format</label>
+                            <input type="text" id="builder-format" class="prompt-builder-input mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="e.g., Format the output as a Markdown list for each day.">
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-6 relative">
+                        <h3 class="text-lg font-semibold text-gray-800">Generated Prompt</h3>
+                        <pre id="prompt-output" class="mt-4 whitespace-pre-wrap break-words text-sm text-gray-700 font-mono h-[calc(100%-80px)] overflow-y-auto"></pre>
+                        <button id="copy-button" class="absolute top-4 right-4 bg-amber-600 text-white px-3 py-1.5 rounded-md text-sm font-medium hover:bg-amber-700 transition">Copy</button>
+                        <div id="copy-feedback" class="absolute bottom-4 right-4 bg-green-500 text-white px-3 py-1.5 rounded-md text-sm font-medium transition opacity-0">Copied!</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white text-center py-6">
+        <p>&copy; 2025 Interactive Guides. Learn, Build, Master.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const anatomyItems = document.querySelectorAll('.anatomy-item');
+            const anatomyDescs = document.querySelectorAll('.anatomy-desc');
+
+            window.selectAnatomy = (id) => {
+                anatomyItems.forEach(item => item.classList.remove('active'));
+                anatomyDescs.forEach(desc => desc.classList.add('hidden'));
+
+                document.getElementById(`anatomy-${id}`).classList.add('active');
+                document.getElementById(`desc-${id}`).classList.remove('hidden');
+            };
+
+            const techniqueTabs = document.querySelectorAll('.technique-tab');
+            const techniqueContents = document.querySelectorAll('.technique-content');
+            
+            let techniquesChart;
+            const chartData = {
+                labels: ['Task Complexity', 'Accuracy/Quality'],
+                datasets: [
+                    { label: 'Zero-Shot', data: [30, 50], backgroundColor: 'rgba(239, 68, 68, 0.6)' },
+                    { label: 'Few-Shot', data: [60, 80], backgroundColor: 'rgba(59, 130, 246, 0.6)' },
+                    { label: 'Chain of Thought', data: [90, 95], backgroundColor: 'rgba(217, 119, 6, 0.6)' }
+                ]
+            };
+
+            const createChart = () => {
+                const ctx = document.getElementById('techniquesChart').getContext('2d');
+                techniquesChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { beginAtZero: true, max: 100, grid: { color: 'rgba(0,0,0,0.05)' } },
+                            x: { grid: { display: false } }
+                        },
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) { label += ': '; }
+                                        if (context.parsed.y !== null) {
+                                            label += context.parsed.y + '%';
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            };
+
+            const highlightChart = (technique) => {
+                chartData.datasets.forEach(dataset => {
+                    if (dataset.label.toLowerCase().includes(technique.split('-')[0])) {
+                        dataset.backgroundColor = dataset.backgroundColor.replace('0.6', '1.0');
+                        dataset.borderColor = '#333';
+                        dataset.borderWidth = 2;
+                    } else {
+                        dataset.backgroundColor = dataset.backgroundColor.replace('1.0', '0.6');
+                        dataset.borderWidth = 0;
+                    }
+                });
+                techniquesChart.update();
+            };
+            
+            window.selectTechnique = (id) => {
+                techniqueTabs.forEach(tab => tab.classList.remove('active'));
+                techniqueContents.forEach(content => content.classList.add('hidden'));
+
+                document.getElementById(`tab-${id}`).classList.add('active');
+                document.getElementById(`content-${id}`).classList.remove('hidden');
+                highlightChart(id);
+            };
+
+            createChart();
+            highlightChart('zero-shot');
+
+            const builderInputs = document.querySelectorAll('#builder input, #builder textarea');
+            const promptOutput = document.getElementById('prompt-output');
+            
+            const updatePrompt = () => {
+                const persona = document.getElementById('builder-persona').value;
+                const task = document.getElementById('builder-task').value;
+                const context = document.getElementById('builder-context').value;
+                const constraints = document.getElementById('builder-constraints').value;
+                const format = document.getElementById('builder-format').value;
+
+                let fullPrompt = '';
+                if (persona) fullPrompt += `## Persona\n${persona}\n\n`;
+                if (task) fullPrompt += `## Task\n${task}\n\n`;
+                if (context) fullPrompt += `## Context\n${context}\n\n`;
+                if (constraints) fullPrompt += `## Constraints\n${constraints}\n\n`;
+                if (format) fullPrompt += `## Output Format\n${format}`;
+
+                promptOutput.textContent = fullPrompt.trim() || 'Your prompt will appear here...';
+            };
+
+            builderInputs.forEach(input => {
+                input.addEventListener('input', updatePrompt);
+            });
+            updatePrompt();
+
+            const copyButton = document.getElementById('copy-button');
+            const copyFeedback = document.getElementById('copy-feedback');
+            copyButton.addEventListener('click', () => {
+                const textToCopy = promptOutput.textContent;
+                if(navigator.clipboard) {
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        copyFeedback.classList.remove('opacity-0');
+                        setTimeout(() => copyFeedback.classList.add('opacity-0'), 2000);
+                    });
+                } else {
+                    const textArea = document.createElement('textarea');
+                    textArea.value = textToCopy;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    textArea.remove();
+                    copyFeedback.classList.remove('opacity-0');
+                    setTimeout(() => copyFeedback.classList.add('opacity-0'), 2000);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
